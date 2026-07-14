@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+from app.routers import upload
+
+
 
 app = FastAPI(title=settings.app_name)
 
+app.include_router(upload.router)
 # Allow Streamlit (running on a different port) to call this API
 app.add_middleware(
     CORSMiddleware,
