@@ -22,3 +22,5 @@ chroma_db/
 
 # Streamlit
 .streamlit/secrets.toml
+
+uploaded_files/
