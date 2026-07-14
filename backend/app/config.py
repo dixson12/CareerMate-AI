@@ -2,10 +2,10 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     app_name: str = "CareerMate AI"
-    openai_api_key: str = ""
+    gemini_api_key: str = ""
     chroma_persist_dir: str = "./chroma_db"
     embedding_model: str = "all-MiniLM-L6-v2"
-    llm_model: str = "gpt-4o-mini"
+    llm_model: str = "gemini-2.5-flash"
 
     class Config:
         env_file = ".env"
