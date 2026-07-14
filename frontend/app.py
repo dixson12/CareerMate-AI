@@ -20,9 +20,18 @@ with st.sidebar:
 
     if uploaded_file is not None:
         st.success(f"Selected: {uploaded_file.name}")
-        # Backend wiring happens in Priority 3 (Upload Documents story)
         if st.button("Upload"):
-            st.info("Upload endpoint not connected yet — coming in Priority 3.")
+            files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+            try:
+                response = requests.post(f"{API_BASE_URL}/upload", files=files, timeout=30)
+                if response.status_code == 200:
+                    result = response.json()
+                    st.success(f"Uploaded! Extracted {result['text_length']} characters.")
+                    st.text_area("Preview", result["text_preview"], height=150)
+                else:
+                    st.error(f"Upload failed: {response.json().get('detail')}")
+            except requests.exceptions.ConnectionError:
+                st.error("Cannot reach backend.")
 
     st.divider()
 
