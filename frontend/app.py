@@ -65,8 +65,28 @@ if prompt := st.chat_input("Ask something about your document..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Mock assistant response (real RAG wiring comes in Priority 4)
+    # Call the real /chat endpoint
     with st.chat_message("assistant"):
-        mock_response = "This is a placeholder response. Chat backend not connected yet — coming in Priority 4."
-        st.markdown(mock_response)
-        st.session_state.messages.append({"role": "assistant", "content": mock_response})
+        with st.spinner("Thinking..."):
+            try:
+                response = requests.post(
+                    f"{API_BASE_URL}/chat",
+                    json={"query": prompt},
+                    timeout=30
+                )
+                if response.status_code == 200:
+                    result = response.json()
+                    answer = result["answer"]
+                    sources = result.get("sources", [])
+
+                    st.markdown(answer)
+                    if sources:
+                        st.caption(f"📄 Sources: {', '.join(sources)}")
+
+                    st.session_state.messages.append({"role": "assistant", "content": answer})
+                else:
+                    error_msg = f"Error: {response.json().get('detail', 'Unknown error')}"
+                    st.error(error_msg)
+                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+            except requests.exceptions.ConnectionError:
+                st.error("Cannot reach backend.")
