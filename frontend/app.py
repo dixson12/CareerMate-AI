@@ -102,7 +102,7 @@ with st.sidebar:
     resume_file = st.file_uploader(
         "Choose your resume",
         type=["pdf", "docx", "txt"],
-        key="resume_uploader"  # important: different key from the document uploader
+        key="resume_uploader"
     )
 
     if resume_file is not None:
@@ -115,10 +115,56 @@ with st.sidebar:
                 if response.status_code == 200:
                     result = response.json()
                     st.success(result["message"])
+                    st.session_state.resume_filename = result["filename"]
                 else:
                     st.error(f"Upload failed: {response.json().get('detail')}")
             except requests.exceptions.ConnectionError:
-                st.error("Cannot reach backend.")            
+                st.error("Cannot reach backend.")
+
+    # Show analysis buttons if a resume has been uploaded
+    if "resume_filename" in st.session_state:
+        st.caption(f"Active resume: {st.session_state.resume_filename}")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Parse Resume", use_container_width=True):
+                try:
+                    with st.spinner("Parsing..."):
+                        response = requests.post(
+                            f"{API_BASE_URL}/parse-resume/{st.session_state.resume_filename}",
+                            timeout=30
+                        )
+                    if response.status_code == 200:
+                        st.session_state.parsed_resume = response.json()["parsed_data"]
+                    else:
+                        st.error("Parsing failed.")
+                except requests.exceptions.ConnectionError:
+                    st.error("Cannot reach backend.")
+
+        with col2:
+            if st.button("Extract Skills", use_container_width=True):
+                try:
+                    with st.spinner("Extracting..."):
+                        response = requests.post(
+                            f"{API_BASE_URL}/extract-skills/{st.session_state.resume_filename}",
+                            timeout=30
+                        )
+                    if response.status_code == 200:
+                        st.session_state.extracted_skills = response.json()["skills"]
+                    else:
+                        st.error("Extraction failed.")
+                except requests.exceptions.ConnectionError:
+                    st.error("Cannot reach backend.")
+
+    # Display parsed resume, if available
+    if "parsed_resume" in st.session_state:
+        with st.expander("📄 Parsed Resume Data", expanded=True):
+            st.json(st.session_state.parsed_resume)
+
+    # Display extracted skills, if available
+    if "extracted_skills" in st.session_state:
+        with st.expander("🛠️ Extracted Skills", expanded=True):
+            st.json(st.session_state.extracted_skills)            
 
     st.markdown(
         '<div class="secure-box">🛡️ <b>Your documents are secure</b><br>'
