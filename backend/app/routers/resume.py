@@ -1,10 +1,11 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.document_service import validate_file, save_file, extract_text
+from app.services.resume_parser import parse_resume
 
 router = APIRouter()
 
-# Simple in-memory store for now — swap for a database in a later sprint
 resume_store: dict[str, str] = {}
+parsed_resume_store: dict[str, dict] = {}
 
 
 @router.post("/upload-resume")
@@ -22,7 +23,6 @@ async def upload_resume(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to extract text: {str(e)}")
 
-    # Store resume text keyed by filename (simple approach for now)
     resume_store[file.filename] = extracted_text
 
     return {
@@ -30,3 +30,14 @@ async def upload_resume(file: UploadFile = File(...)):
         "text_length": len(extracted_text),
         "message": "Resume uploaded successfully. Ready for analysis."
     }
+
+
+@router.post("/parse-resume/{filename}")
+async def parse_resume_endpoint(filename: str):
+    if filename not in resume_store:
+        raise HTTPException(status_code=404, detail="Resume not found. Upload it first.")
+
+    parsed = parse_resume(resume_store[filename])
+    parsed_resume_store[filename] = parsed
+
+    return {"filename": filename, "parsed_data": parsed}
