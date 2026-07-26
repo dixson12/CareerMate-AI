@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.document_service import validate_file, save_file, extract_text
 from app.services.resume_parser import parse_resume
-
+from app.services.skill_extractor import extract_skills
 router = APIRouter()
 
 resume_store: dict[str, str] = {}
@@ -41,3 +41,13 @@ async def parse_resume_endpoint(filename: str):
     parsed_resume_store[filename] = parsed
 
     return {"filename": filename, "parsed_data": parsed}
+
+
+@router.post("/extract-skills/{filename}")
+async def extract_skills_endpoint(filename: str):
+    if filename not in resume_store:
+        raise HTTPException(status_code=404, detail="Resume not found. Upload it first.")
+
+    skills = extract_skills(resume_store[filename])
+
+    return {"filename": filename, "skills": skills}
