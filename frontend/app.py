@@ -95,6 +95,30 @@ with st.sidebar:
                     st.error(f"Upload failed: {response.json().get('detail')}")
             except requests.exceptions.ConnectionError:
                 st.error("Cannot reach backend.")
+    st.divider()
+    st.markdown("**📋 Upload Resume**")
+    st.caption("Upload your CV for AI analysis.")
+
+    resume_file = st.file_uploader(
+        "Choose your resume",
+        type=["pdf", "docx", "txt"],
+        key="resume_uploader"  # important: different key from the document uploader
+    )
+
+    if resume_file is not None:
+        st.success(f"Selected: {resume_file.name}")
+        if st.button("Upload Resume", use_container_width=True):
+            files = {"file": (resume_file.name, resume_file.getvalue())}
+            try:
+                with st.spinner("Uploading resume..."):
+                    response = requests.post(f"{API_BASE_URL}/upload-resume", files=files, timeout=30)
+                if response.status_code == 200:
+                    result = response.json()
+                    st.success(result["message"])
+                else:
+                    st.error(f"Upload failed: {response.json().get('detail')}")
+            except requests.exceptions.ConnectionError:
+                st.error("Cannot reach backend.")            
 
     st.markdown(
         '<div class="secure-box">🛡️ <b>Your documents are secure</b><br>'
