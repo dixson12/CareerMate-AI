@@ -125,19 +125,19 @@ with st.sidebar:
     if "resume_filename" in st.session_state:
         st.caption(f"Active resume: {st.session_state.resume_filename}")
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Parse Resume", use_container_width=True):
                 try:
                     with st.spinner("Parsing..."):
                         response = requests.post(
                             f"{API_BASE_URL}/parse-resume/{st.session_state.resume_filename}",
-                            timeout=30
+                            timeout=60
                         )
                     if response.status_code == 200:
                         st.session_state.parsed_resume = response.json()["parsed_data"]
                     else:
-                        st.error("Parsing failed.")
+                        st.error(f"Parsing failed: {response.status_code}")
                 except requests.exceptions.ConnectionError:
                     st.error("Cannot reach backend.")
 
@@ -147,12 +147,27 @@ with st.sidebar:
                     with st.spinner("Extracting..."):
                         response = requests.post(
                             f"{API_BASE_URL}/extract-skills/{st.session_state.resume_filename}",
-                            timeout=30
+                            timeout=60
                         )
                     if response.status_code == 200:
                         st.session_state.extracted_skills = response.json()["skills"]
                     else:
-                        st.error("Extraction failed.")
+                        st.error(f"Extraction failed: {response.status_code}")
+                except requests.exceptions.ConnectionError:
+                    st.error("Cannot reach backend.")
+
+        with col3:
+            if st.button("Analyze Resume", use_container_width=True):
+                try:
+                    with st.spinner("Analyzing..."):
+                        response = requests.post(
+                            f"{API_BASE_URL}/analyze-resume/{st.session_state.resume_filename}",
+                            timeout=60
+                        )
+                    if response.status_code == 200:
+                        st.session_state.resume_analysis = response.json()["analysis"]
+                    else:
+                        st.error(f"Analysis failed: {response.status_code}")
                 except requests.exceptions.ConnectionError:
                     st.error("Cannot reach backend.")
 
@@ -164,7 +179,41 @@ with st.sidebar:
     # Display extracted skills, if available
     if "extracted_skills" in st.session_state:
         with st.expander("🛠️ Extracted Skills", expanded=True):
-            st.json(st.session_state.extracted_skills)            
+            st.json(st.session_state.extracted_skills)
+    # Display resume analysis, if available
+    if "resume_analysis" in st.session_state:
+        analysis = st.session_state.resume_analysis
+
+        if "error" not in analysis:
+            st.markdown("### 📊 Resume Analysis")
+
+            score = analysis.get("overall_score", 0)
+            st.metric("Overall Score", f"{score}/100")
+            st.write(analysis.get("summary", ""))
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown("**✅ Strengths**")
+                for s in analysis.get("strengths", []):
+                    st.markdown(f"- {s}")
+            with col_b:
+                st.markdown("**⚠️ Areas to Improve**")
+                for w in analysis.get("weaknesses", []):
+                    st.markdown(f"- {w}")
+
+            if analysis.get("bullet_point_improvements"):
+                st.markdown("**✏️ Bullet Point Rewrites**")
+                for item in analysis["bullet_point_improvements"]:
+                    st.markdown(f"❌ *{item['original']}*")
+                    st.markdown(f"✅ **{item['improved']}**")
+                    st.write("")
+
+            if analysis.get("formatting_notes"):
+                st.markdown("**📐 Formatting Notes**")
+                for note in analysis["formatting_notes"]:
+                    st.markdown(f"- {note}")
+        else:
+            st.error("Could not parse analysis results.")            
 
     st.markdown(
         '<div class="secure-box">🛡️ <b>Your documents are secure</b><br>'
