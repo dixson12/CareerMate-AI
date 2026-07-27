@@ -7,6 +7,10 @@ router = APIRouter()
 resume_store: dict[str, str] = {}
 parsed_resume_store: dict[str, dict] = {}
 
+from app.services.resume_analyzer import analyze_resume
+
+# ... existing code ...
+
 
 @router.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
@@ -51,3 +55,11 @@ async def extract_skills_endpoint(filename: str):
     skills = extract_skills(resume_store[filename])
 
     return {"filename": filename, "skills": skills}
+@router.post("/analyze-resume/{filename}")
+async def analyze_resume_endpoint(filename: str):
+    if filename not in resume_store:
+        raise HTTPException(status_code=404, detail="Resume not found. Upload it first.")
+
+    analysis = analyze_resume(resume_store[filename])
+
+    return {"filename": filename, "analysis": analysis}
