@@ -4,11 +4,8 @@ from sentence_transformers import SentenceTransformer
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.config import settings
 
-# --- Setup (runs once on import) ---
 embedding_model = SentenceTransformer(settings.embedding_model)
-
 chroma_client = chromadb.PersistentClient(path=settings.chroma_persist_dir)
-collection = chroma_client.get_or_create_collection(name="documents")
 
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=500,
@@ -16,11 +13,17 @@ splitter = RecursiveCharacterTextSplitter(
 )
 
 
+def get_collection(name: str):
+    """Get or create a named Chroma collection — one per knowledge domain."""
+    return chroma_client.get_or_create_collection(name=name)
+
+
 def chunk_text(text: str) -> list[str]:
     return splitter.split_text(text)
 
 
-def add_document_to_store(filename: str, text: str):
+def add_document_to_store(filename: str, text: str, collection_name: str = "documents"):
+    collection = get_collection(collection_name)
     chunks = chunk_text(text)
     if not chunks:
         return 0
@@ -38,7 +41,8 @@ def add_document_to_store(filename: str, text: str):
     return len(chunks)
 
 
-def query_documents(query: str, top_k: int = 4) -> list[dict]:
+def query_documents(query: str, top_k: int = 4, collection_name: str = "documents") -> list[dict]:
+    collection = get_collection(collection_name)
     query_embedding = embedding_model.encode([query]).tolist()
 
     results = collection.query(
