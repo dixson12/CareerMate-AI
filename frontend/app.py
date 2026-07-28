@@ -180,6 +180,60 @@ with st.sidebar:
     if "extracted_skills" in st.session_state:
         with st.expander("🛠️ Extracted Skills", expanded=True):
             st.json(st.session_state.extracted_skills)
+    # Job matching section
+    if "resume_filename" in st.session_state:
+        st.divider()
+        st.markdown("**🎯 Match with Job Description**")
+        job_description = st.text_area(
+            "Paste the job description here",
+            height=150,
+            key="jd_input"
+        )
+
+        if st.button("Match Resume", use_container_width=True):
+            if not job_description.strip():
+                st.warning("Please paste a job description first.")
+            else:
+                try:
+                    with st.spinner("Matching..."):
+                        response = requests.post(
+                            f"{API_BASE_URL}/match-job/{st.session_state.resume_filename}",
+                            json={"job_description": job_description},
+                            timeout=60
+                        )
+                    if response.status_code == 200:
+                        st.session_state.job_match = response.json()["match"]
+                    else:
+                        st.error(f"Matching failed: {response.status_code}")
+                except requests.exceptions.ConnectionError:
+                    st.error("Cannot reach backend.")
+
+    # Display match results
+    if "job_match" in st.session_state:
+        match = st.session_state.job_match
+        if "error" not in match:
+            st.markdown("### 🎯 Match Results")
+            st.metric("Overall Match", f"{match.get('overall_match_percentage', 0)}%")
+            st.write(match.get("summary", ""))
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown("**✅ Matched Skills**")
+                for s in match.get("matched_skills", []):
+                    st.markdown(f"- {s}")
+            with col_b:
+                st.markdown("**❌ Missing Skills**")
+                for s in match.get("missing_skills", []):
+                    st.markdown(f"- {s}")
+
+            if match.get("missing_soft_skills"):
+                st.markdown("**🗣️ Missing Soft Skills**")
+                for s in match["missing_soft_skills"]:
+                    st.markdown(f"- {s}")
+
+            st.info(f"💡 {match.get('recommendation', '')}")
+        else:
+            st.error("Could not parse match results.")
     # Display resume analysis, if available
     if "resume_analysis" in st.session_state:
         analysis = st.session_state.resume_analysis
