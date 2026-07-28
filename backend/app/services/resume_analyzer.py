@@ -6,6 +6,8 @@ client = genai.Client(api_key=settings.gemini_api_key)
 
 ANALYSIS_PROMPT = """You are an expert resume reviewer. Analyze the resume text below and provide constructive, specific feedback.
 
+IMPORTANT: Base all feedback strictly on the content provided. Do not invent achievements, numbers, or details that aren't in the original text — bullet point rewrites should strengthen the WORDING and CLARITY of what's already there, not fabricate new accomplishments or metrics not implied by the original.
+
 Return ONLY valid JSON in this exact format, with no markdown formatting, no code fences, no extra text:
 {{
   "overall_score": <integer 0-100>,

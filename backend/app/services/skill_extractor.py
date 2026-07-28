@@ -8,6 +8,8 @@ SKILL_EXTRACTION_PROMPT = """You are a skill extraction engine. Analyze the resu
 - Skills explicitly listed in a Skills section
 - Skills implied by experience or project descriptions (e.g. "built a dashboard in Power BI" implies Power BI)
 
+IMPORTANT: Only extract skills that are explicitly stated or clearly and directly implied by specific text in the resume. Do not add generic or assumed skills that aren't supported by the text.
+
 Return ONLY valid JSON in this exact format, with no markdown formatting, no code fences, no extra text:
 {{
   "technical_skills": ["string", "string"],
