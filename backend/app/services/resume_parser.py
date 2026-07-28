@@ -6,6 +6,8 @@ client = genai.Client(api_key=settings.gemini_api_key)
 
 PARSE_PROMPT = """You are a resume parser. Extract structured information from the resume text below.
 
+IMPORTANT: Only use information explicitly present in the text below. Do not infer, invent, or assume details that are not stated. If a field is not present, use null (for single values) or an empty array (for lists).
+
 Return ONLY valid JSON in this exact format, with no markdown formatting, no code fences, no extra text:
 {{
   "name": "string or null",
