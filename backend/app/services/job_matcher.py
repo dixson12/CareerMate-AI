@@ -6,6 +6,8 @@ client = genai.Client(api_key=settings.gemini_api_key)
 
 MATCH_PROMPT = """You are a resume-to-job matching engine. Compare the candidate's resume against the job description below.
 
+IMPORTANT: Base the match strictly on what is stated in both texts. Do not assume skills or experience the candidate hasn't demonstrated in the resume.
+
 Return ONLY valid JSON in this exact format, with no markdown formatting, no code fences, no extra text:
 {{
   "overall_match_percentage": <integer 0-100>,
