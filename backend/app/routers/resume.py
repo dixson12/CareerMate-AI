@@ -2,15 +2,12 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.document_service import validate_file, save_file, extract_text
 from app.services.resume_parser import parse_resume
 from app.services.skill_extractor import extract_skills
-router = APIRouter()
-
-resume_store: dict[str, str] = {}
-parsed_resume_store: dict[str, dict] = {}
+from pydantic import BaseModel
+from app.services.job_matcher import match_resume_to_job
 
 from app.services.resume_analyzer import analyze_resume
 
-# ... existing code ...
-
+router = APIRouter()
 
 @router.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
@@ -63,3 +60,23 @@ async def analyze_resume_endpoint(filename: str):
     analysis = analyze_resume(resume_store[filename])
 
     return {"filename": filename, "analysis": analysis}
+# ... existing code ...
+
+class JobMatchRequest(BaseModel):
+    job_description: str
+
+
+@router.post("/match-job/{filename}")
+async def match_job_endpoint(filename: str, request: JobMatchRequest):
+    if filename not in resume_store:
+        raise HTTPException(status_code=404, detail="Resume not found. Upload it first.")
+
+    if not request.job_description.strip():
+        raise HTTPException(status_code=400, detail="Job description cannot be empty")
+
+    match_result = match_resume_to_job(resume_store[filename], request.job_description)
+
+    return {"filename": filename, "match": match_result}
+
+resume_store: dict[str, str] = {}
+parsed_resume_store: dict[str, dict] = {}
