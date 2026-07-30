@@ -354,3 +354,29 @@ if prompt := st.chat_input("Ask something about your document..."):
                     st.session_state.messages.append({"role": "assistant", "content": error_msg})
             except requests.exceptions.ConnectionError:
                 st.error("Cannot reach backend.")
+st.divider()
+st.markdown("## 🛂 Visa Q&A")
+st.caption("Ask about student visas, work permits, and immigration pathways in Ireland.")
+
+visa_question = st.text_input("Ask a visa-related question", key="visa_question_input")
+
+if st.button("Ask", key="visa_ask_button"):
+    if not visa_question.strip():
+        st.warning("Please enter a question.")
+    else:
+        try:
+            with st.spinner("Looking that up..."):
+                response = requests.post(
+                    f"{API_BASE_URL}/visa-qa",
+                    json={"question": visa_question},
+                    timeout=60
+                )
+            if response.status_code == 200:
+                result = response.json()
+                st.markdown(result["answer"])
+                if result.get("sources"):
+                    st.caption(f"📄 Sources: {', '.join(result['sources'])}")
+            else:
+                st.error(f"Failed: {response.status_code}")
+        except requests.exceptions.ConnectionError:
+            st.error("Cannot reach backend.")
