@@ -20,3 +20,5 @@ chromadb==0.5.5
 
 # Azure
 azure-storage-blob==12.23.1
+azure-identity==1.19.0
+azure-keyvault-secrets==4.9.0
