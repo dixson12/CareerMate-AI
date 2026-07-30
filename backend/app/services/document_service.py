@@ -2,9 +2,8 @@ import os
 from pathlib import Path
 from pypdf import PdfReader
 from docx import Document
-
-UPLOAD_DIR = Path("uploaded_files")
-UPLOAD_DIR.mkdir(exist_ok=True)
+from io import BytesIO
+from app.services.blob_service import upload_blob, download_blob
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
 MAX_FILE_SIZE_MB = 10
@@ -19,26 +18,23 @@ def validate_file(filename: str, file_size: int) -> tuple[bool, str]:
     return True, ""
 
 
-def save_file(filename: str, content: bytes) -> Path:
-    file_path = UPLOAD_DIR / filename
-    with open(file_path, "wb") as f:
-        f.write(content)
-    return file_path
+def save_file_to_blob(filename: str, content: bytes, container_name: str = "documents") -> str:
+    return upload_blob(container_name, filename, content)
 
 
-def extract_text(file_path: Path) -> str:
-    ext = file_path.suffix.lower()
+def extract_text_from_bytes(filename: str, content: bytes) -> str:
+    ext = Path(filename).suffix.lower()
 
     if ext == ".pdf":
-        reader = PdfReader(str(file_path))
+        reader = PdfReader(BytesIO(content))
         return "\n".join(page.extract_text() or "" for page in reader.pages)
 
     elif ext == ".docx":
-        doc = Document(str(file_path))
+        doc = Document(BytesIO(content))
         return "\n".join(para.text for para in doc.paragraphs)
 
     elif ext == ".txt":
-        return file_path.read_text(encoding="utf-8")
+        return content.decode("utf-8")
 
     else:
         raise ValueError(f"Unsupported file type: {ext}")

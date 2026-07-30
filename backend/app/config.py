@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     chroma_persist_dir: str = "./chroma_db"
     embedding_model: str = "all-MiniLM-L6-v2"
     llm_model: str = "gemini-2.5-flash"
+    azure_storage_connection_string: str = ""
 
     class Config:
         env_file = ".env"

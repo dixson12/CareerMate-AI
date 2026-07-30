@@ -9,8 +9,11 @@ from app.services.resume_analyzer import analyze_resume
 from app.services.interview_service import generate_interview_prep
 from app.services.learning_roadmap import generate_roadmap
 
+from app.services.document_service import validate_file, save_file_to_blob, extract_text_from_bytes
 
+# ... in upload_resume function, replace save_file(...) + extract_text(...) with:
 
+    
 
 
 router = APIRouter()
@@ -22,13 +25,15 @@ async def upload_resume(file: UploadFile = File(...)):
     is_valid, error_message = validate_file(file.filename, len(content))
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_message)
-
-    file_path = save_file(file.filename, content)
-
+    save_file_to_blob(file.filename, content, container_name="resumes")
+    
     try:
-        extracted_text = extract_text(file_path)
+        extracted_text = extract_text_from_bytes(file.filename, content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to extract text: {str(e)}")
+    
+
+    
 
     resume_store[file.filename] = extracted_text
 

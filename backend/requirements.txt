@@ -17,3 +17,6 @@ langchain-text-splitters==0.3.0
 # LLM
 google-genai==0.3.0
 chromadb==0.5.5
+
+# Azure
+azure-storage-blob==12.23.1
