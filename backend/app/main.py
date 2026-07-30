@@ -2,20 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 
-from app.routers import upload, chat
-
-from app.routers import upload, chat, resume
-
-# ...after CORS middleware...
-
-
-
+from app.routers import upload, chat, resume, visa
 
 
 app = FastAPI(title=settings.app_name)
 app.include_router(upload.router)
 app.include_router(chat.router)
 app.include_router(resume.router)
+app.include_router(visa.router)
 
 # Allow Streamlit (running on a different port) to call this API
 app.add_middleware(
