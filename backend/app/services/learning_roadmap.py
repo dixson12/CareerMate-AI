@@ -6,7 +6,7 @@ client = genai.Client(api_key=settings.gemini_api_key)
 
 ROADMAP_PROMPT = """You are a career learning coach. Based on the missing skills below (gaps between a candidate's resume and a target job), create a realistic, prioritized learning roadmap.
 
-IMPORTANT: Prioritize skills by likely impact and learning difficulty. Keep the plan realistic — don't claim someone can master a complex skill in a few days.
+IMPORTANT: Prioritize skills by likely impact and learning difficulty. Keep the plan realistic — don't claim someone can master a complex skill in a few days. If a skill genuinely requires more than a few weeks to become job-ready in, say so honestly rather than compressing the timeline to fit a clean weekly structure.
 
 Return ONLY valid JSON in this exact format, with no markdown formatting, no code fences, no extra text:
 {{
