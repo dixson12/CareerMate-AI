@@ -1,5 +1,4 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from app.services.document_service import validate_file, save_file, extract_text
 from app.services.resume_parser import parse_resume
 from app.services.skill_extractor import extract_skills
 from pydantic import BaseModel
@@ -10,7 +9,6 @@ from app.services.interview_service import generate_interview_prep
 from app.services.learning_roadmap import generate_roadmap
 
 from app.services.document_service import validate_file, save_file_to_blob, extract_text_from_bytes
-
 # ... in upload_resume function, replace save_file(...) + extract_text(...) with:
 
     
