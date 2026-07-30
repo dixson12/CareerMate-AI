@@ -6,7 +6,21 @@ from pydantic import BaseModel
 from app.services.job_matcher import match_resume_to_job
 
 from app.services.resume_analyzer import analyze_resume
+from app.services.interview_service import generate_interview_prep
 
+# ... existing code ...
+
+
+async def interview_prep_endpoint(filename: str, request: InterviewPrepRequest):
+    if filename not in resume_store:
+        raise HTTPException(status_code=404, detail="Resume not found. Upload it first.")
+
+    if not request.target_role.strip():
+        raise HTTPException(status_code=400, detail="Target role cannot be empty")
+
+    prep = generate_interview_prep(resume_store[filename], request.target_role)
+
+    return {"filename": filename, "interview_prep": prep}
 router = APIRouter()
 
 @router.post("/upload-resume")
@@ -32,8 +46,16 @@ async def upload_resume(file: UploadFile = File(...)):
         "message": "Resume uploaded successfully. Ready for analysis."
     }
 
+class InterviewPrepRequest(BaseModel):
+    target_role: str
+
+
+@router.post("/interview-prep/{filename}")
+
 
 @router.post("/parse-resume/{filename}")
+
+
 async def parse_resume_endpoint(filename: str):
     if filename not in resume_store:
         raise HTTPException(status_code=404, detail="Resume not found. Upload it first.")
