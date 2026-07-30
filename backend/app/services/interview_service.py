@@ -6,7 +6,7 @@ client = genai.Client(api_key=settings.gemini_api_key)
 
 INTERVIEW_PROMPT = """You are an interview preparation coach. Based on the candidate's resume and their target role below, generate realistic interview questions they're likely to face.
 
-IMPORTANT: Base technical questions on the actual skills and experience mentioned in the resume. Do not assume expertise the candidate hasn't demonstrated.
+IMPORTANT: Base technical questions on the actual skills and experience mentioned in the resume. Do not assume expertise the candidate hasn't demonstrated. Questions about gaps should be realistic concerns an interviewer would genuinely raise, not exaggerated weaknesses.
 
 Return ONLY valid JSON in this exact format, with no markdown formatting, no code fences, no extra text:
 {{
@@ -26,7 +26,6 @@ Resume text:
 
 Target Role: {target_role}
 """
-
 
 def generate_interview_prep(resume_text: str, target_role: str) -> dict:
     prompt = INTERVIEW_PROMPT.format(resume_text=resume_text, target_role=target_role)
