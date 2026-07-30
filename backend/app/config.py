@@ -1,7 +1,9 @@
 from pydantic_settings import BaseSettings
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -18,15 +20,20 @@ class Settings(BaseSettings):
         env_file = ".env"
 
     def load_secrets_from_vault(self):
-        """Fetch secrets from Azure Key Vault, overriding any local .env values."""
+        """Fetch secrets from Azure Key Vault. Falls back to .env values if unavailable (e.g. local dev)."""
         if not self.key_vault_url:
-            return  # No vault configured — fall back to .env (local dev without Key Vault)
+            logger.info("No Key Vault URL configured — using .env values.")
+            return
 
-        credential = DefaultAzureCredential()
-        client = SecretClient(vault_url=self.key_vault_url, credential=credential)
+        try:
+            credential = DefaultAzureCredential()
+            client = SecretClient(vault_url=self.key_vault_url, credential=credential)
 
-        self.gemini_api_key = client.get_secret("gemini-api-key").value
-        self.azure_storage_connection_string = client.get_secret("azure-storage-connection-string").value
+            self.gemini_api_key = client.get_secret("gemini-api-key").value
+            self.azure_storage_connection_string = client.get_secret("azure-storage-connection-string").value
+            logger.info("Successfully loaded secrets from Key Vault.")
+        except Exception as e:
+            logger.warning(f"Could not reach Key Vault ({e}). Falling back to .env values.")
 
 
 settings = Settings()
