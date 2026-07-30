@@ -7,20 +7,12 @@ from app.services.job_matcher import match_resume_to_job
 
 from app.services.resume_analyzer import analyze_resume
 from app.services.interview_service import generate_interview_prep
+from app.services.learning_roadmap import generate_roadmap
 
-# ... existing code ...
 
 
-async def interview_prep_endpoint(filename: str, request: InterviewPrepRequest):
-    if filename not in resume_store:
-        raise HTTPException(status_code=404, detail="Resume not found. Upload it first.")
 
-    if not request.target_role.strip():
-        raise HTTPException(status_code=400, detail="Target role cannot be empty")
 
-    prep = generate_interview_prep(resume_store[filename], request.target_role)
-
-    return {"filename": filename, "interview_prep": prep}
 router = APIRouter()
 
 @router.post("/upload-resume")
@@ -51,7 +43,16 @@ class InterviewPrepRequest(BaseModel):
 
 
 @router.post("/interview-prep/{filename}")
+async def interview_prep_endpoint(filename: str, request: InterviewPrepRequest):
+    if filename not in resume_store:
+        raise HTTPException(status_code=404, detail="Resume not found. Upload it first.")
 
+    if not request.target_role.strip():
+        raise HTTPException(status_code=400, detail="Target role cannot be empty")
+
+    prep = generate_interview_prep(resume_store[filename], request.target_role)
+
+    return {"filename": filename, "interview_prep": prep}
 
 @router.post("/parse-resume/{filename}")
 
@@ -102,3 +103,18 @@ async def match_job_endpoint(filename: str, request: JobMatchRequest):
 
 resume_store: dict[str, str] = {}
 parsed_resume_store: dict[str, dict] = {}
+
+
+class RoadmapRequest(BaseModel):
+    missing_skills: list[str]
+    missing_soft_skills: list[str] = []
+
+
+@router.post("/skill-gap-roadmap")
+async def skill_gap_roadmap_endpoint(request: RoadmapRequest):
+    if not request.missing_skills and not request.missing_soft_skills:
+        raise HTTPException(status_code=400, detail="No missing skills provided")
+
+    roadmap = generate_roadmap(request.missing_skills, request.missing_soft_skills)
+
+    return {"roadmap": roadmap}

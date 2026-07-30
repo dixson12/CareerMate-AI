@@ -234,6 +234,92 @@ with st.sidebar:
             st.info(f"💡 {match.get('recommendation', '')}")
         else:
             st.error("Could not parse match results.")
+    # Learning roadmap — only show if we have match results with gaps
+    if "job_match" in st.session_state and "error" not in st.session_state.job_match:
+        missing = st.session_state.job_match.get("missing_skills", [])
+        missing_soft = st.session_state.job_match.get("missing_soft_skills", [])
+
+        if missing or missing_soft:
+            if st.button("Generate Learning Roadmap", use_container_width=True):
+                try:
+                    with st.spinner("Building your roadmap..."):
+                        response = requests.post(
+                            f"{API_BASE_URL}/skill-gap-roadmap",
+                            json={"missing_skills": missing, "missing_soft_skills": missing_soft},
+                            timeout=60
+                        )
+                    if response.status_code == 200:
+                        st.session_state.learning_roadmap = response.json()["roadmap"]
+                    else:
+                        st.error(f"Failed: {response.status_code}")
+                except requests.exceptions.ConnectionError:
+                    st.error("Cannot reach backend.")
+
+    # Display roadmap
+    if "learning_roadmap" in st.session_state:
+        roadmap_data = st.session_state.learning_roadmap
+        if "error" not in roadmap_data:
+            st.markdown("### 🗺️ Your Learning Roadmap")
+            for item in roadmap_data.get("roadmap", []):
+                st.markdown(f"**Week {item['week']}: {item['focus']}**")
+                st.write(item["goal"])
+                if item.get("suggested_resources"):
+                    st.caption(f"Resources: {', '.join(item['suggested_resources'])}")
+                st.write("")
+
+            if roadmap_data.get("priority_order_reasoning"):
+                st.info(f"💡 {roadmap_data['priority_order_reasoning']}")
+        else:
+            st.error("Could not generate roadmap.")
+    # Interview prep section
+    if "resume_filename" in st.session_state:
+        st.divider()
+        st.markdown("**🎤 Interview Preparation**")
+        target_role = st.text_input("What role are you preparing for?", key="interview_role_input")
+
+        if st.button("Generate Interview Prep", use_container_width=True):
+            if not target_role.strip():
+                st.warning("Please enter a target role.")
+            else:
+                try:
+                    with st.spinner("Preparing your interview questions..."):
+                        response = requests.post(
+                            f"{API_BASE_URL}/interview-prep/{st.session_state.resume_filename}",
+                            json={"target_role": target_role},
+                            timeout=60
+                        )
+                    if response.status_code == 200:
+                        st.session_state.interview_prep = response.json()["interview_prep"]
+                    else:
+                        st.error(f"Failed: {response.status_code}")
+                except requests.exceptions.ConnectionError:
+                    st.error("Cannot reach backend.")
+
+    # Display interview prep results
+    if "interview_prep" in st.session_state:
+        prep = st.session_state.interview_prep
+        if "error" not in prep:
+            st.markdown("### 🎤 Your Interview Prep")
+
+            st.markdown("**💬 Behavioral Questions**")
+            for q in prep.get("behavioral_questions", []):
+                st.markdown(f"- {q}")
+
+            st.markdown("**⚙️ Technical Questions**")
+            for q in prep.get("technical_questions", []):
+                st.markdown(f"- {q}")
+
+            if prep.get("questions_about_gaps"):
+                st.markdown("**🔍 Questions About Potential Gaps**")
+                for q in prep["questions_about_gaps"]:
+                    st.markdown(f"- {q}")
+
+            if prep.get("tips"):
+                st.markdown("**💡 Tips**")
+                for tip in prep["tips"]:
+                    st.markdown(f"- {tip}")
+        else:
+            st.error("Could not generate interview prep.")
     # Display resume analysis, if available
     if "resume_analysis" in st.session_state:
         analysis = st.session_state.resume_analysis
