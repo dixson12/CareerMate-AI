@@ -89,7 +89,7 @@ with st.sidebar:
             files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
             try:
                 with st.spinner("Uploading..."):
-                    response = requests.post(f"{API_BASE_URL}/upload", files=files, timeout=30)
+                    response = requests.post(f"{API_BASE_URL}/upload", files=files, timeout=90)
                 if response.status_code == 200:
                     result = response.json()
                     st.success(f"Uploaded! {result['chunks_stored']} chunks stored.")
