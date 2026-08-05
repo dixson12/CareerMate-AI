@@ -99,14 +99,51 @@ with st.sidebar:
                 st.error("Cannot reach backend.")
 
     st.divider()
-    st.markdown("**📋 Upload Resume**")
-    st.caption("Upload your CV for AI analysis.")
+    st.markdown("**📋 Resume**")
 
+    # Option to reuse a previously uploaded resume
+    try:
+        existing_resumes = requests.get(f"{API_BASE_URL}/list-resumes", timeout=10).json().get("resumes", [])
+    except requests.exceptions.ConnectionError:
+        existing_resumes = []
+
+    if existing_resumes:
+        selected_existing = st.selectbox(
+            "Or use a previously uploaded resume",
+            options=["-- Select --"] + existing_resumes
+        )
+        col_select, col_delete = st.columns(2)
+        with col_select:
+            if selected_existing != "-- Select --" and st.button("Load", use_container_width=True):
+                try:
+                    response = requests.post(f"{API_BASE_URL}/select-resume/{selected_existing}", timeout=30)
+                    if response.status_code == 200:
+                        st.session_state.resume_filename = selected_existing
+                        st.success("Loaded!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to load.")
+                except requests.exceptions.ConnectionError:
+                    st.error("Cannot reach backend.")
+        with col_delete:
+            if selected_existing != "-- Select --" and st.button("🗑️ Delete", use_container_width=True):
+                try:
+                    response = requests.delete(f"{API_BASE_URL}/delete-resume/{selected_existing}", timeout=30)
+                    if response.status_code == 200:
+                        st.success("Deleted!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to delete.")
+                except requests.exceptions.ConnectionError:
+                    st.error("Cannot reach backend.")
+
+    st.caption("Or upload a new one:")
     resume_file = st.file_uploader(
         "Choose your resume",
         type=["pdf", "docx", "txt"],
         key="resume_uploader"
     )
+    
 
     if resume_file is not None:
         st.success(f"Selected: {resume_file.name}")
