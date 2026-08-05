@@ -24,3 +24,5 @@ chroma_db/
 .streamlit/secrets.toml
 
 uploaded_files/
+
+backend.zip

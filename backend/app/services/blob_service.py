@@ -23,3 +23,15 @@ def blob_exists(container_name: str, filename: str) -> bool:
     container_client = blob_service_client.get_container_client(container_name)
     blob_client = container_client.get_blob_client(filename)
     return blob_client.exists()
+def list_blobs(container_name: str) -> list[str]:
+    container_client = blob_service_client.get_container_client(container_name)
+    return [blob.name for blob in container_client.list_blobs()]
+
+
+def delete_blob(container_name: str, filename: str) -> bool:
+    container_client = blob_service_client.get_container_client(container_name)
+    blob_client = container_client.get_blob_client(filename)
+    if blob_client.exists():
+        blob_client.delete_blob()
+        return True
+    return False
