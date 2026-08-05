@@ -1,11 +1,24 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.document_service import validate_file, save_file_to_blob, extract_text_from_bytes
 from app.services.rag_service import add_document_to_store
-
+from app.services.blob_service import list_blobs, delete_blob
 router = APIRouter()
-
-
 @router.post("/upload")
+
+
+
+@router.get("/list-documents")
+async def list_documents():
+    filenames = list_blobs("documents")
+    return {"documents": filenames}
+
+
+@router.delete("/delete-document/{filename}")
+async def delete_document(filename: str):
+    deleted = delete_blob("documents", filename)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="File not found in storage")
+    return {"message": f"{filename} deleted successfully"}
 async def upload_document(file: UploadFile = File(...)):
     content = await file.read()
 

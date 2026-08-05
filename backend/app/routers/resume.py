@@ -15,7 +15,42 @@ from app.services.document_service import validate_file, save_file_to_blob, extr
 
 
 router = APIRouter()
+from app.services.blob_service import list_blobs, delete_blob, download_blob
 
+
+@router.get("/list-resumes")
+async def list_resumes():
+    filenames = list_blobs("resumes")
+    return {"resumes": filenames}
+
+
+@router.delete("/delete-resume/{filename}")
+async def delete_resume(filename: str):
+    deleted = delete_blob("resumes", filename)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="File not found in storage")
+
+    # Also clean up any in-memory data for this file
+    resume_store.pop(filename, None)
+    parsed_resume_store.pop(filename, None)
+
+    return {"message": f"{filename} deleted successfully"}
+
+
+@router.post("/select-resume/{filename}")
+async def select_resume(filename: str):
+    # If already loaded in memory, just confirm
+    if filename in resume_store:
+        return {"filename": filename, "message": "Resume already loaded", "text_length": len(resume_store[filename])}
+
+    # Otherwise, re-download from Blob and re-extract text
+    try:
+        content = download_blob("resumes", filename)
+        extracted_text = extract_text_from_bytes(filename, content)
+        resume_store[filename] = extracted_text
+        return {"filename": filename, "message": "Resume loaded from storage", "text_length": len(extracted_text)}
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Could not load resume: {str(e)}")
 @router.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
     content = await file.read()
